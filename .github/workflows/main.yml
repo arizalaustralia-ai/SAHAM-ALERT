@@ -1,0 +1,28 @@
+name: Saham Alert Bot
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Setiap hari jam 07:00 WIB (00:00 UTC)
+  workflow_dispatch: # Agar bisa dijalankan manual
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run Bot
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+        run: python bot.py
