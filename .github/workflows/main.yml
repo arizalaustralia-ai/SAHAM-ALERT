@@ -1,7 +1,6 @@
 name: Saham Alert Bot
 
 on:
-on:
   schedule:
     - cron: '0 * * * *' # Jalan setiap jam tepat
   workflow_dispatch:
