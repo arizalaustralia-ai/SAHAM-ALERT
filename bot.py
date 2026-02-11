@@ -36,7 +36,7 @@ def check_idx():
         if not table: return []
         
         rows = table.find_all('tr')[1:6] 
-        keywords = ["akuisisi", "merger", "divestasi", "private placement", "right issue", "joint venture", "free float"]
+        keywords = ["akuisisi", "merger", "divestasi", "private placement", "right issue", "joint venture", "free float", "direktur", "direksi"]
         
         news = []
         for row in rows:
