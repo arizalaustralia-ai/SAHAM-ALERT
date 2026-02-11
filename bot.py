@@ -9,9 +9,22 @@ CHAT_ID = os.environ.get('CHAT_ID')
 
 # Sumber Data
 URL_IDX = 'https://www.idx.co.id/en/listed-companies/corporate-actions/'
-URL_CNBC = 'https://www.cnbcindonesia.com/investment/feed' 
-URL_KONTAN = 'https://investasi.kontan.co.id/rss'
-URL_INVESTOR = 'https://www.investor.id/rss/investasi'
+RSS_SOURCES = {
+    "CNBC": "https://www.cnbcindonesia.com/investment/feed",
+    "Kontan": "https://investasi.kontan.co.id/rss",
+    "Investor": "https://www.investor.id/rss/investasi",
+    "Antara": "https://www.antaranews.com/rss/ekonomi.xml" # --- TAMBAHAN ANTARA ---
+}
+
+# --- KATA KUNCI (DISATUKAN) ---
+KEYWORDS = [
+    "akuisisi", "merger", "divestasi", "private placement", 
+    "right issue", "hmetd", "joint venture", "free float", 
+    "backdoor", "merambah", "diversifikasi", "lini bisnis baru", 
+    "fokus baru", "bidang usaha baru", "ekspansi ke", 
+    "transformasi bisnis", "pengendali", "corporate action", 
+    "target price", "laporan keuangan", "laba"
+]
 
 def send_telegram_message(message):
     if not TELEGRAM_TOKEN or not CHAT_ID:
@@ -36,7 +49,6 @@ def check_idx():
         if not table: return []
         
         rows = table.find_all('tr')[1:6] 
-        keywords = ["akuisisi", "merger", "divestasi", "private placement", "right issue", "joint venture", "free float", "direktur", "direksi"]
         
         news = []
         for row in rows:
@@ -44,7 +56,7 @@ def check_idx():
             if len(cols) > 0:
                 ticker = cols[1].text.strip()
                 action = cols[2].text.strip()
-                if any(key in action.lower() for key in keywords):
+                if any(key in action.lower() for key in KEYWORDS):
                     news.append(f"🏢 <b>IDX: {ticker}</b> - {action}")
         return news
     except Exception as e:
@@ -56,18 +68,12 @@ def check_rss(url, source_name):
         feed = feedparser.parse(url)
         news = []
         
-        # --- KEMBALIKAN KE KEYWORD FOKUS ---
-        business_keywords = ["merambah", "diversifikasi", "lini bisnis baru", "fokus baru", "bidang usaha baru", "backdoor", "ekspansi ke", "transformasi bisnis", "HMETD", "kepemilikan", "pengendali", "konglo", "laporan keuangan", "corporate action", "target price", "laba"]
-        
-     for entry in feed.entries[:2]: 
+        # Ambil 2 berita teratas per sumber
+        for entry in feed.entries[:2]: 
             title = entry.title
             link = entry.link
             
-            # --- Tambahkan baris ini untuk melihat log di GitHub ---
-            print(f"Mengecek judul: {title}")
-            # -----------------------------------------------------
-            
-            if any(keyword in title.lower() for keyword in business_keywords):
+            if any(keyword in title.lower() for keyword in KEYWORDS):
                 news.append(f"📰 <b>{source_name}:</b> {title}\n<a href='{link}'>Baca</a>")
         return news
     except Exception as e:
@@ -76,10 +82,13 @@ def check_rss(url, source_name):
 
 if __name__ == "__main__":
     all_news = []
+    
+    # Ambil data dari IDX
     all_news.extend(check_idx())
-    all_news.extend(check_rss(URL_CNBC, "CNBC"))
-    all_news.extend(check_rss(URL_KONTAN, "Kontan"))
-    all_news.extend(check_rss(URL_INVESTOR, "Investor"))
+    
+    # Ambil data dari semua sumber RSS
+    for name, url in RSS_SOURCES.items():
+        all_news.extend(check_rss(url, name))
 
     if all_news:
         message = "🚨 <b>Alert Saham & Ekspansi Bisnis:</b>\n\n" + "\n\n".join(all_news)
